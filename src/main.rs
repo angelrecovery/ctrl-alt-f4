@@ -1,9 +1,7 @@
 use windows::core::Result;
 
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_F4, VK_MENU};
-use windows::Win32::UI::WindowsAndMessaging::{
-    GetForegroundWindow, GetWindowTextLengthW, GetWindowThreadProcessId,
-};
+use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
 
 use windows::Win32::Foundation::{CloseHandle, HANDLE, HWND};
 use windows::Win32::System::Threading::{OpenProcess, Sleep, TerminateProcess, PROCESS_TERMINATE};
@@ -12,12 +10,6 @@ fn find_top_window() -> Option<HWND> {
     let window = unsafe { GetForegroundWindow() };
 
     if window.is_invalid() {
-        return None;
-    }
-
-    let length = unsafe { GetWindowTextLengthW(window) } as usize;
-
-    if length == 0 {
         return None;
     }
 
@@ -40,36 +32,30 @@ fn kill_process(handle: HANDLE) -> Result<()> {
 }
 
 fn user_requested_kill() -> bool {
-    let combination = [VK_CONTROL.0, VK_MENU.0, VK_F4.0];
+    const KEY_COMBO: [u16; 3] = [VK_CONTROL.0, VK_MENU.0, VK_F4.0];
 
-    combination
+    KEY_COMBO
         .iter()
-        .all(|&vk| (unsafe { GetAsyncKeyState(vk as i32) }) & i16::MIN != 0)
+        .all(|&vk| (unsafe { GetAsyncKeyState(vk.into()) }) & i16::MIN != 0)
 }
 
 fn main() -> Result<()> {
     loop {
         unsafe { Sleep(5) };
 
-        let requested = user_requested_kill();
-
-        if !requested {
+        if !user_requested_kill() {
             continue;
         }
 
-        let top = find_top_window();
-
-        if top.is_none() {
+        let Some(window) = find_top_window() else {
             continue;
-        }
+        };
 
-        let targ = handle_from_hwnd(top.unwrap());
-
-        if targ.is_none() {
+        let Some(handle) = handle_from_hwnd(window) else {
             continue;
-        }
+        };
 
-        kill_process(targ.unwrap())?;
+        kill_process(handle)?;
 
         unsafe { Sleep(1500) };
     }
