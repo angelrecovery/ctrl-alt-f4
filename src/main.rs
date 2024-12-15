@@ -44,7 +44,7 @@ fn user_requested_kill() -> bool {
 
     combination
         .iter()
-        .all(|&vk| (unsafe { GetAsyncKeyState(vk as i32) } as i16) & i16::MIN != 0)
+        .all(|&vk| (unsafe { GetAsyncKeyState(vk as i32) }) & i16::MIN != 0)
 }
 
 fn main() -> Result<()> {
