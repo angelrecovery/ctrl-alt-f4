@@ -49,17 +49,17 @@ fn main() -> Result<()> {
             continue;
         }
 
-        let Some(window) = top_hwnd() else {
+        let Some(hwnd) = top_hwnd() else {
             continue;
         };
 
-        let Some(handle) = handle_from_hwnd(window) else {
+        let Some(handle) = handle_from_hwnd(hwnd) else {
             continue;
         };
 
         if kill_process(handle).is_err() {
             eprintln!(
-                "(ctrl-alt-f4) Failed to kill process with handle {:?}, Windows says: {}",
+                "(ctrl-alt-f4) Failed to kill process with handle {:?}, Windows error: {}",
                 handle,
                 Error::last_os_error()
             );
