@@ -1,12 +1,14 @@
+use std::io::Error;
+
 use windows::core::Result;
 
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_F4, VK_MENU};
 use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
 
 use windows::Win32::Foundation::{CloseHandle, HANDLE, HWND};
-use windows::Win32::System::Threading::{OpenProcess, Sleep, TerminateProcess, PROCESS_TERMINATE};
+use windows::Win32::System::Threading::{OpenProcess, PROCESS_TERMINATE, Sleep, TerminateProcess};
 
-fn find_top_window() -> Option<HWND> {
+fn top_hwnd() -> Option<HWND> {
     let window = unsafe { GetForegroundWindow() };
 
     if window.is_invalid() {
@@ -31,7 +33,7 @@ fn kill_process(handle: HANDLE) -> Result<()> {
     unsafe { CloseHandle(handle) }
 }
 
-fn user_requested_kill() -> bool {
+fn req_kill() -> bool {
     const KEY_COMBO: [u16; 3] = [VK_CONTROL.0, VK_MENU.0, VK_F4.0];
 
     KEY_COMBO
@@ -43,11 +45,11 @@ fn main() -> Result<()> {
     loop {
         unsafe { Sleep(5) };
 
-        if !user_requested_kill() {
+        if !req_kill() {
             continue;
         }
 
-        let Some(window) = find_top_window() else {
+        let Some(window) = top_hwnd() else {
             continue;
         };
 
@@ -56,7 +58,11 @@ fn main() -> Result<()> {
         };
 
         if kill_process(handle).is_err() {
-            eprintln!("Failed to kill process");
+            eprintln!(
+                "(ctrl-alt-f4) Failed to kill process with handle {:?}, Windows says: {}",
+                handle,
+                Error::last_os_error()
+            );
         }
 
         unsafe { Sleep(1500) };
