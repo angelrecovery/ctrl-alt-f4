@@ -55,7 +55,9 @@ fn main() -> Result<()> {
             continue;
         };
 
-        kill_process(handle)?;
+        if kill_process(handle).is_err() {
+            eprintln!("Failed to kill process");
+        }
 
         unsafe { Sleep(1500) };
     }
