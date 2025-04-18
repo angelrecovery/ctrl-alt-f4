@@ -1,5 +1,3 @@
-use std::io::Error;
-
 use windows::core::Result;
 
 use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_F4, VK_MENU};
@@ -21,16 +19,20 @@ fn top_hwnd() -> Option<HWND> {
 fn handle_from_hwnd(window: HWND) -> Option<HANDLE> {
     let mut pid = 0;
 
-    if unsafe { GetWindowThreadProcessId(window, Some(&mut pid)) } == 0 {
-        return None;
-    }
+    unsafe {
+        if GetWindowThreadProcessId(window, Some(&mut pid)) == 0 {
+            return None;
+        }
 
-    unsafe { OpenProcess(PROCESS_TERMINATE, false, pid) }.ok()
+        OpenProcess(PROCESS_TERMINATE, false, pid).ok()
+    }
 }
 
 fn kill_process(handle: HANDLE) -> Result<()> {
-    unsafe { TerminateProcess(handle, 0) }?;
-    unsafe { CloseHandle(handle) }
+    unsafe {
+        TerminateProcess(handle, 0)?;
+        CloseHandle(handle)
+    }
 }
 
 fn req_kill() -> bool {
@@ -59,9 +61,8 @@ fn main() -> Result<()> {
 
         if kill_process(handle).is_err() {
             eprintln!(
-                "(ctrl-alt-f4) Failed to kill process with handle {:?}, Windows error: {}",
-                handle,
-                Error::last_os_error()
+                "(ctrl-alt-f4) Failed to kill process: {}",
+                std::io::Error::last_os_error()
             );
         }
 
