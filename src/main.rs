@@ -1,10 +1,12 @@
+use windows::Win32::{
+    Foundation::{CloseHandle, HANDLE, HWND},
+    System::Threading::{OpenProcess, PROCESS_TERMINATE, TerminateProcess},
+    UI::{
+        Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_F4, VK_MENU},
+        WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId},
+    },
+};
 use windows::core::Result;
-
-use windows::Win32::UI::Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_F4, VK_MENU};
-use windows::Win32::UI::WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId};
-
-use windows::Win32::Foundation::{CloseHandle, HANDLE, HWND};
-use windows::Win32::System::Threading::{OpenProcess, PROCESS_TERMINATE, Sleep, TerminateProcess};
 
 fn top_hwnd() -> Option<HWND> {
     let window = unsafe { GetForegroundWindow() };
