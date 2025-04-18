@@ -41,7 +41,7 @@ fn req_kill() -> bool {
 
 fn main() -> Result<()> {
     loop {
-        unsafe { Sleep(5) };
+        std::thread::sleep(std::time::Duration::from_millis(5));
 
         if !req_kill() {
             continue;
@@ -62,6 +62,6 @@ fn main() -> Result<()> {
             );
         }
 
-        unsafe { Sleep(1500) };
+        std::thread::sleep(std::time::Duration::from_millis(1500));
     }
 }
