@@ -3,7 +3,7 @@
 version = 4
 
 [[package]]
-name = "f4"
+name = "ctrl-alt-f4"
 version = "0.0.0"
 dependencies = [
  "windows",
