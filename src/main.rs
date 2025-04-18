@@ -1,6 +1,6 @@
 use windows::Win32::{
     Foundation::{CloseHandle, HANDLE, HWND},
-    System::Threading::{OpenProcess, PROCESS_TERMINATE, TerminateProcess},
+    System::Threading::{OpenProcess, PROCESS_ACCESS_RIGHTS, PROCESS_TERMINATE, TerminateProcess},
     UI::{
         Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_F4, VK_MENU},
         WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId},
@@ -18,13 +18,13 @@ fn top_hwnd() -> Option<HWND> {
     Some(window)
 }
 
-fn handle_from_hwnd(window: HWND) -> Option<HANDLE> {
+fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<HANDLE> {
     let mut pid = 0;
     unsafe {
         if GetWindowThreadProcessId(window, Some(&mut pid)) == 0 {
             return None;
         }
-        OpenProcess(PROCESS_TERMINATE, false, pid).ok()
+        OpenProcess(access_type, false, pid).ok()
     }
 }
 
@@ -53,7 +53,7 @@ fn main() -> Result<()> {
             continue;
         };
 
-        let Some(handle) = handle_from_hwnd(hwnd) else {
+        let Some(handle) = handle_from_hwnd(hwnd, PROCESS_TERMINATE) else {
             continue;
         };
 
