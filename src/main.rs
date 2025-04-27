@@ -10,12 +10,11 @@ use windows::core::Result;
 
 fn top_hwnd() -> Option<HWND> {
     let window = unsafe { GetForegroundWindow() };
-
     if window.is_invalid() {
-        return None;
+        None
+    } else {
+        Some(window)
     }
-
-    Some(window)
 }
 
 fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<HANDLE> {
@@ -24,6 +23,7 @@ fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<
         if GetWindowThreadProcessId(window, Some(&mut pid)) == 0 {
             return None;
         }
+
         OpenProcess(access_type, false, pid).ok()
     }
 }
@@ -42,6 +42,7 @@ fn req_kill() -> bool {
 }
 
 fn main() -> Result<()> {
+    println!("(ctrl-alt-f4) Started");
     loop {
         std::thread::sleep(std::time::Duration::from_millis(5));
 
