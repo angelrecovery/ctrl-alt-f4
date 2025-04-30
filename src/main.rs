@@ -18,6 +18,10 @@ impl Handle {
             Some(Self(handle))
         }
     }
+
+    pub fn raw(self) -> HANDLE {
+        self.0
+    }
 }
 
 impl Drop for Handle {
@@ -62,7 +66,7 @@ fn req_kill() -> bool {
 }
 
 fn kill(handle: Handle) -> Result<()> {
-     unsafe { TerminateProcess(handle.0, 0) }
+     unsafe { TerminateProcess(handle.raw(), 0) }
 }
 
 fn main() -> Result<()> {
