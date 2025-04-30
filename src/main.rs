@@ -30,8 +30,9 @@ fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<
 
 fn kill_process(handle: HANDLE) -> Result<()> {
     unsafe {
-        TerminateProcess(handle, 0)?;
-        CloseHandle(handle)
+        let term = TerminateProcess(handle, 0);
+        _ = CloseHandle(handle);
+        term
     }
 }
 
