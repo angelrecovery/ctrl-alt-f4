@@ -23,7 +23,9 @@ fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<
         if GetWindowThreadProcessId(window, Some(&mut pid)) == 0 {
             return None;
         }
-
+        if pid == std::process::id() {
+            return None;
+        }
         OpenProcess(access_type, false, pid).ok()
     }
 }
@@ -59,10 +61,11 @@ fn main() -> Result<()> {
             continue;
         };
 
-        if kill_process(handle).is_err() {
+        if let Err(err) = kill_process(handle) {
             eprintln!(
-                "(ctrl-alt-f4) Failed to kill process: {}",
-                std::io::Error::last_os_error()
+                "(ctrl-alt-f4) Failed to kill process: {}, {}",
+                std::io::Error::last_os_error(),
+                err
             );
         }
 
