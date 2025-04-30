@@ -54,7 +54,7 @@ fn handle_from_pid(pid: u32, rights: PROCESS_ACCESS_RIGHTS) -> Option<Handle> {
     }
     if let Some(handle) = unsafe { OpenProcess(rights, false, pid).ok() } {
         Handle::new(handle)
-    } else  {
+    } else {
         None
     }
 }
@@ -90,11 +90,11 @@ fn main() -> Result<()> {
             continue;
         };
 
-        if let Err(err) = kill(handle) {
+        if let Err(error) = kill(handle) {
             eprintln!(
                 "(ctrl-alt-f4) Failed to kill process: {}, {}",
                 std::io::Error::last_os_error(),
-                err
+                error
             );
         }
 
