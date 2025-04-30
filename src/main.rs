@@ -8,6 +8,22 @@ use windows::Win32::{
 };
 use windows::core::Result;
 
+struct Handle(HANDLE);
+impl Handle {
+    pub fn new(handle: HANDLE) -> Option<Self> {
+        if handle.is_invalid() {
+            None
+        } else {
+            Some(Self(handle))
+        }
+    }
+}
+impl Drop for Handle {
+    fn drop(&mut self) {
+        unsafe { _ = CloseHandle(self.0) }
+    }
+}
+
 fn top_hwnd() -> Option<HWND> {
     let window = unsafe { GetForegroundWindow() };
     if window.is_invalid() {
@@ -17,7 +33,7 @@ fn top_hwnd() -> Option<HWND> {
     }
 }
 
-fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<HANDLE> {
+fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<Handle> {
     let mut pid = 0;
     unsafe {
         if GetWindowThreadProcessId(window, Some(&mut pid)) == 0 {
@@ -26,16 +42,16 @@ fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<
         if pid == std::process::id() {
             return None;
         }
-        OpenProcess(access_type, false, pid).ok()
+        if let Some(handle) = OpenProcess(access_type, false, pid).ok() {
+            Handle::new(handle)
+        } else {
+            None
+        }
     }
 }
 
-fn kill_process(handle: HANDLE) -> Result<()> {
-    unsafe {
-        let term = TerminateProcess(handle, 0);
-        _ = CloseHandle(handle);
-        term
-    }
+fn kill_process(handle: Handle) -> Result<()> {
+     unsafe { TerminateProcess(handle.0, 0) }
 }
 
 fn req_kill() -> bool {
