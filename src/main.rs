@@ -9,6 +9,7 @@ use windows::Win32::{
 use windows::core::Result;
 
 struct Handle(HANDLE);
+
 impl Handle {
     pub fn new(handle: HANDLE) -> Option<Self> {
         if handle.is_invalid() {
@@ -18,13 +19,14 @@ impl Handle {
         }
     }
 }
+
 impl Drop for Handle {
     fn drop(&mut self) {
         unsafe { _ = CloseHandle(self.0) }
     }
 }
 
-fn top_hwnd() -> Option<HWND> {
+fn top_window() -> Option<HWND> {
     let window = unsafe { GetForegroundWindow() };
     if window.is_invalid() {
         None
@@ -33,31 +35,34 @@ fn top_hwnd() -> Option<HWND> {
     }
 }
 
-fn handle_from_hwnd(window: HWND, access_type: PROCESS_ACCESS_RIGHTS) -> Option<Handle> {
+fn pid_from_window(window: HWND) -> Option<u32> {
     let mut pid = 0;
-    unsafe {
-        if GetWindowThreadProcessId(window, Some(&mut pid)) == 0 {
-            return None;
-        }
-        if pid == std::process::id() {
-            return None;
-        }
-        if let Some(handle) = OpenProcess(access_type, false, pid).ok() {
-            Handle::new(handle)
-        } else {
-            None
-        }
+    if unsafe { GetWindowThreadProcessId(window, Some(&mut pid)) } == 0 {
+        None
+    } else {
+        Some(pid)
     }
 }
 
-fn kill_process(handle: Handle) -> Result<()> {
-     unsafe { TerminateProcess(handle.0, 0) }
+fn handle_from_pid(pid: u32, rights: PROCESS_ACCESS_RIGHTS) -> Option<Handle> {
+    if pid == std::process::id() {
+        return None;
+    }
+    if let Some(handle) = unsafe { OpenProcess(rights, false, pid).ok() } {
+        Handle::new(handle)
+    } else  {
+        None
+    }
 }
 
 fn req_kill() -> bool {
     [VK_CONTROL.0, VK_MENU.0, VK_F4.0]
         .iter()
         .all(|&vk| (unsafe { GetAsyncKeyState(vk.into()) }) & i16::MIN != 0)
+}
+
+fn kill(handle: Handle) -> Result<()> {
+     unsafe { TerminateProcess(handle.0, 0) }
 }
 
 fn main() -> Result<()> {
@@ -69,15 +74,19 @@ fn main() -> Result<()> {
             continue;
         }
 
-        let Some(hwnd) = top_hwnd() else {
+        let Some(window) = top_window() else {
             continue;
         };
 
-        let Some(handle) = handle_from_hwnd(hwnd, PROCESS_TERMINATE) else {
+        let Some(pid) = pid_from_window(window) else {
             continue;
         };
 
-        if let Err(err) = kill_process(handle) {
+        let Some(handle) = handle_from_pid(pid, PROCESS_TERMINATE) else {
+            continue;
+        };
+
+        if let Err(err) = kill(handle) {
             eprintln!(
                 "(ctrl-alt-f4) Failed to kill process: {}, {}",
                 std::io::Error::last_os_error(),
