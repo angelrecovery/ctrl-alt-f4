@@ -1,6 +1,10 @@
 [package]
 name = "ctrl-alt-f4"
 edition = "2024"
+authors = [
+    "Lily Fox <angelrecovery@icloud.com>"
+]
+license = "BSD-2-Clause"
 
 [dependencies]
 env_logger = "0.11.8"
