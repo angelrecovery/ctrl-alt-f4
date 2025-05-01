@@ -48,12 +48,12 @@ fn pid_from_window(window: HWND) -> Option<u32> {
     }
 }
 
-fn handle_from_pid(pid: u32, rights: PROCESS_ACCESS_RIGHTS) -> Option<Handle> {
+fn process_from_pid(pid: u32, rights: PROCESS_ACCESS_RIGHTS) -> Option<Handle> {
     if pid == std::process::id() {
         return None;
     }
-    if let Some(handle) = unsafe { OpenProcess(rights, false, pid).ok() } {
-        Handle::new(handle)
+    if let Some(process) = unsafe { OpenProcess(rights, false, pid).ok() } {
+        Handle::new(process)
     } else {
         None
     }
@@ -65,12 +65,13 @@ fn req_kill() -> bool {
         .all(|&vk| (unsafe { GetAsyncKeyState(vk.into()) }) & i16::MIN != 0)
 }
 
-fn kill(handle: Handle) -> Result<()> {
-     unsafe { TerminateProcess(handle.raw(), 0) }
+fn kill(process: Handle) -> Result<()> {
+    unsafe { TerminateProcess(process.raw(), 0) }
 }
 
 fn main() -> Result<()> {
-    println!("(ctrl-alt-f4) Started");
+    env_logger::init();
+    log::info!("Started");
     loop {
         std::thread::sleep(std::time::Duration::from_millis(5));
 
@@ -86,13 +87,13 @@ fn main() -> Result<()> {
             continue;
         };
 
-        let Some(handle) = handle_from_pid(pid, PROCESS_TERMINATE) else {
+        let Some(process) = process_from_pid(pid, PROCESS_TERMINATE) else {
             continue;
         };
 
-        if let Err(error) = kill(handle) {
-            eprintln!(
-                "(ctrl-alt-f4) Failed to kill process: {}, {}",
+        if let Err(error) = kill(process) {
+            log::error!(
+                "Failed to kill process: {}, {}",
                 std::io::Error::last_os_error(),
                 error
             );
