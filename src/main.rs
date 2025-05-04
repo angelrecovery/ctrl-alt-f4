@@ -74,7 +74,7 @@ fn kill(process: Handle) -> Result<()> {
 
 fn main() -> Result<()> {
     env_logger::init();
-    ctrlc::set_handler(move || {
+    ctrlc::set_handler(|| {
         log::info!("Bye!");
         std::process::exit(0);
     })
