@@ -1,6 +1,9 @@
 use windows::Win32::{
     Foundation::{CloseHandle, HANDLE, HWND},
-    System::Threading::{OpenProcess, PROCESS_ACCESS_RIGHTS, PROCESS_TERMINATE, TerminateProcess},
+    System::Threading::{
+        OpenProcess, PROCESS_ACCESS_RIGHTS, PROCESS_TERMINATE, ProcessExtensionPointDisablePolicy,
+        TerminateProcess,
+    },
     UI::{
         Input::KeyboardAndMouse::{GetAsyncKeyState, VK_CONTROL, VK_F4, VK_MENU},
         WindowsAndMessaging::{GetForegroundWindow, GetWindowThreadProcessId},
@@ -71,6 +74,11 @@ fn kill(process: Handle) -> Result<()> {
 
 fn main() -> Result<()> {
     env_logger::init();
+    ctrlc::set_handler(move || {
+        log::info!("Bye!");
+        std::process::exit(0);
+    })
+    .expect("Failed to set ctrl-c handler");
     log::info!("Started");
     loop {
         std::thread::sleep(std::time::Duration::from_millis(5));
