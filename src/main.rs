@@ -107,6 +107,7 @@ fn main() -> Result<()> {
             );
         }
 
+        log::info!("Killed a process!");
         std::thread::sleep(std::time::Duration::from_millis(1500));
     }
 }
